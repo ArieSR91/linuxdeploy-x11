@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths-ignore: ['**.md']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Fetch X server sources (git submodules of Termux:X11)
+        run: git submodule update --init --recursive --jobs 8 --depth 1
+      - name: Build
+        run: ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linuxdeploy-apk
+          path: app/build/outputs/apk/release/*.apk

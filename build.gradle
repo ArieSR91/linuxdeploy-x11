@@ -1,0 +1,41 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Same toolchain as Termux:X11 (the :lorie module is built with it): requires JDK 17+, Gradle 9.1+
+        classpath 'com.android.tools.build:gradle:9.3.1'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+    }
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}
+
+// The X server (Termux:X11) is built from git submodules, which are not included in a zip archive.
+// Fail early with a clear message instead of a CMake error from deep inside of the native build.
+tasks.register('checkX11Sources') {
+    doLast {
+        def xserver = file('lorie/src/main/cpp/xserver')
+        if (!xserver.isDirectory() || xserver.list().length == 0) {
+            throw new GradleException(
+                    "Sources of the X server are missing: lorie/src/main/cpp/xserver is empty.\n" +
+                    "  git clone:  git submodule update --init --recursive --depth 1\n" +
+                    "  zip/other:  ./copy-submodules.sh /path/to/termux-x11   (a checkout made with --recurse-submodules)")
+        }
+    }
+}
+gradle.projectsEvaluated {
+    project(':lorie').tasks.named('preBuild') { dependsOn rootProject.tasks.named('checkX11Sources') }
+}

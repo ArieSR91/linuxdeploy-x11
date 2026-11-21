@@ -1,0 +1,4 @@
+include ':app'
+// Termux:X11 (X server + display) merged into Linux Deploy
+include ':lorie'
+include ':shell-loader:stub'

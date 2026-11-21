@@ -1,0 +1,44 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'ru.meefik.linuxdeploy'
+    compileSdkVersion 35
+
+    defaultConfig {
+        applicationId 'ru.meefik.linuxdeploy'
+        // :lorie (Termux:X11) requires Android 7.0+
+        minSdkVersion 24
+        // IMPORTANT: targetSdk must stay at 28 (see README "Android 9-15 compatibility").
+        // Since targetSdk 29 Android forbids execve() of files in the app data directory (W^X),
+        // which is how BusyBox/PRoot/e2fsprogs are executed here. Android 9-15 still install and
+        // run apps with targetSdk 28 (the install block starts below targetSdk 23).
+        targetSdkVersion 28
+        versionCode 280
+        versionName "2.8.0"
+    }
+    buildFeatures.buildConfig true
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    lint.checkReleaseBuilds = false
+    lint.abortOnError = false
+    compileOptions.sourceCompatibility JavaVersion.VERSION_1_9
+    compileOptions.targetCompatibility JavaVersion.VERSION_1_9
+}
+
+dependencies {
+    // Termux:X11: X server (libXlorie.so + CmdEntryPoint) and the display (MainActivity)
+    implementation project(':lorie')
+
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.browser:browser:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'androidx.preference:preference:1.2.1'
+}
