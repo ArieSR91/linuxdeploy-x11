@@ -6,7 +6,7 @@ Get apk from release below
 
 Guide:
 - Click button in right-bottom corner, and setting your container
-- In distribution menu select Docker if the normal installation is fail
+- In distribution menu select Docker if the normal installation is fails
 - Setting your distro, but don't check Pulseaudio and GUI first
 - Login as root to fix sudo, Fill Username: root , Password: toor
 - Click 3 dot button in top-right corner and install
