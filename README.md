@@ -5,14 +5,15 @@ Linux Deploy is an APK to install Linux on Android (root required)
 Get apk from release below
 
 Guide:
-- Setting your container first, click button in right-bottom corner
-- In Distribution menu select Docker if the normal installation is fail
-- setting your distro, but don't check Pulseaudio and GUI first
-- Login as root first to fix sudo, Fill Username: root , Password: toor
+- Click button in right-bottom corner, and setting your container
+- In distribution menu select Docker if the normal installation is fail
+- Setting your distro, but don't check Pulseaudio and GUI first
+- Login as root to fix sudo, Fill Username: root , Password: toor
 - Click 3 dot button in top-right corner and install
 - Then [login via SSH](#login-via-ssh): ssh root@localhost -p 22 or install [linuxdeploy launcher in termux](#launcher-in-termux): linuxdeploy -s
 - Install nano and sudo to fix missing sudo in Docker image
-- After sudo installed in container you can login as user now
+- After sudo installed in container you can login as user and check Pulseaudio and GUI now
+- Then Re-configure the container to fix all
 
 ## Login via SSH
 ```
