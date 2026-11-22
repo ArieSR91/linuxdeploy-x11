@@ -10,8 +10,9 @@ Guide:
 - setting your distro, but don't check Pulseaudio and GUI first
 - Login as root first to fix sudo, Fill Username: root , Password: toor
 - Click 3 dot button in top-right corner to install it
-- Then [login via SSH](# Login via SSH): ssh root@localhost -p 22 or install [linuxdeploy launcher in termux](# Launcher in Termux): linuxdeploy -s
-- Install sudo and nano to fix missing sudo in Docker image
+
+Then [login via SSH](# Login via SSH): ssh root@localhost -p 22 or install [linuxdeploy launcher in termux](# Launcher in Termux): linuxdeploy -s
+Install sudo and nano to fix missing sudo in Docker image
 
 ## Login via SSH
 ```
