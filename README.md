@@ -1,5 +1,5 @@
 # linuxdeploy-x11
-Linux Deploy is an APK to install Linux on Android
+Linux Deploy is an APK to install Linux on Android (root required)
 
 ## Installation
 Get apk from release below
@@ -11,18 +11,18 @@ Guide:
 - Login as root first to fix sudo, Fill Username: root , Password: toor
 - Click 3 dot button in top-right corner and install
 - Then [login via SSH](#login-via-ssh): ssh root@localhost -p 22 or install [linuxdeploy launcher in termux](#launcher-in-termux): linuxdeploy -s
-- Install sudo and nano to fix missing sudo in Docker image
+- Install nano and sudo to fix missing sudo in Docker image
+- After sudo installed in container you can login as user now
 
 ## Login via SSH
 ```
 ssh root@localhost -p 22
 ```
 
-
 ## Launcher in Termux
 You can run linuxdeploy in termux too
 
-Make sure you've install pulseaudio first to fix the audio
+Make sure you've install pulseaudio in termux to fix the audio
 ```
 apt install pulseaudio root-repo tsu -y
 ```
@@ -32,10 +32,11 @@ wget https://raw.githubusercontent.com/ArieSR91/linuxdeploy-x11/main/linuxdeploy
 ```
 
 ## Fix keyring error
-Edit this 3 file in \
+Edit this 4 file in: \
 /etc/pam.d/login \
 /etc/pam.d/su-l \
-/etc/pam.d/runuser-l
+/etc/pam.d/runuser-l \
+/etc/pam.d/sshd
 
 Comment this string: \
 \#session       optional   pam_keyinit.so force revoke
