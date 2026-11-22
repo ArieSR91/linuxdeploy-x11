@@ -31,6 +31,7 @@ Then:
 ```
 wget https://raw.githubusercontent.com/ArieSR91/linuxdeploy-x11/main/linuxdeploy -O $PREFIX/bin/linuxdeploy; chmod 775 $PREFIX/bin/linuxdeploy; linuxdeploy
 ```
+Usage: linuxdeploy [options]
 
 ## Fix keyring error
 Edit this 4 file in: \
