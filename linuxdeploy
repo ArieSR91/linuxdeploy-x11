@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+
+LD_APP="${LD_APP:-/data/data/ru.meefik.linuxdeploy}"
+LD_ENV="${LD_ENV:-$LD_APP/files}"
+LD_CLI="$LD_ENV/bin/linuxdeploy"
+sudo() { su -c "$(printf '%q ' "$@")"; }
+
+usage() {
+    cat <<EOF
+Run Linux Deploy via Termux.
+
+Usage: linuxdeploy [options]
+
+Options:
+    -s, --shell         Login to cli.
+    -m, --mount         Mount container.
+    -u, --umount        Umount container.
+    -v, --vnc           Start VNC.
+    -x, --x11           Start X11.
+    -h, --help          Show help.
+
+Use KEEP_MOUNTED=1 flag to keep container mounted after exit
+More Information: https://github.com/ArieSR91
+EOF
+}
+
+die() { echo "linuxdeploy: $*" >&2; exit 1; }
+
+# jalankan perintah linuxdeploy sebagai root
+ld() { su -c "$(printf '%q ' env -u LD_PRELOAD -u LD_LIBRARY_PATH "$LD_CLI" "$@")"; }
+
+# baca konfigurasi langsung sebagai root (tanpa menyalin file yang jadi milik root)
+load_config() {
+    command -v sudo >/dev/null 2>&1 || die "perintah 'sudo' tidak ada, jalankan: pkg install tsu"
+    sudo test -x "$LD_CLI" || die "$LD_CLI tidak ditemukan. Buka aplikasi Linux Deploy dan jalankan Settings > Update ENV."
+    source <(sudo cat "$LD_ENV/cli.conf" 2>/dev/null)
+    PROFILE="${PROFILE:-linux}"
+    sudo test -r "$LD_ENV/config/$PROFILE.conf" || die "profil '$PROFILE' tidak ditemukan di $LD_ENV/config"
+    source <(sudo cat "$LD_ENV/config/$PROFILE.conf" 2>/dev/null)
+    USER_NAME="${USER_NAME:-root}"
+    # titik mount container selalu ${ENV_DIR}/mnt (TARGET_PATH adalah path image/direktori sumber)
+    MNT_DIR="${CHROOT_DIR:-$LD_ENV/mnt}"
+}
+
+audio_start() {
+    command -v pulseaudio >/dev/null 2>&1 || return 0
+    pulseaudio --check 2>/dev/null ||
+    pulseaudio --start --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" --exit-idle-time=-1
+}
+
+audio_stop() {
+    command -v pulseaudio >/dev/null 2>&1 && pulseaudio --kill 2>/dev/null
+    return 0
+}
+
+wait_port() {
+    local port="$1" tries="${2:-30}"
+    while [ "$tries" -gt 0 ]; do
+        (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null && return 0
+        sleep 1
+        tries=$((tries - 1))
+    done
+    return 1
+}
+
+do_mount() {
+    audio_start
+    ld start -m
+}
+
+do_umount() {
+    ld stop -u
+    audio_stop
+}
+
+do_shell() {
+    audio_start
+    clear
+    ld shell -u "$USER_NAME"
+    [ "$KEEP_MOUNTED" = "1" ] || do_umount
+}
+
+do_vnc() {
+    do_mount
+    local port=$((5900 + ${VNC_DISPLAY:-0}))
+    if wait_port "$port" 30; then
+        termux-open "vnc://127.0.0.1:$port"
+    else
+        echo "VNC server have not active in port $port. Open VNC server apk manualy." >&2
+    fi
+}
+
+MNT_DIR="${MNT_DIR_FIXED:-/data/local/mnt}"
+X11_SOCK="$MNT_DIR/tmp/.X11-unix/X0"
+
+x11_up() { sudo test -S "$X11_SOCK"; }
+
+x11_session_alive() {
+    local pid
+    pid=$(sudo cat "$MNT_DIR/tmp/xsession.pid" 2>/dev/null)
+    [ -n "$pid" ] && sudo test -d "/proc/$pid"
+}
+
+app_cmd() {
+    sudo am broadcast -a ru.meefik.linuxdeploy.BROADCAST_ACTION \
+        -p ru.meefik.linuxdeploy --user 0 --esn "$1" >/dev/null 2>&1
+}
+
+x11_cleanup() {
+    am broadcast --user 0 -a com.termux.x11.ACTION_STOP -p ru.meefik.linuxdeploy >/dev/null 2>&1
+    sudo pkill -f '[C]mdEntryPoint' 2>/dev/null
+}
+
+x11_wait() {
+    local i=0
+    while [ "$i" -lt "$1" ]; do
+        x11_up && return 0
+        sleep 1
+        i=$((i + 1))
+    done
+    return 1
+}
+
+do_x11() {
+    audio_start
+    x11_cleanup
+    trap 'x11_cleanup; do_umount; exit' INT TERM HUP
+
+    ld mount || die "Failed to mount container"
+    ld start || die "Failed to start container"
+
+    if ! x11_wait 15; then
+        echo "X server did not start from Termux, trying through the app..."
+        app_cmd start
+        x11_wait 45 || { do_umount; die "X server did not start"; }
+    fi
+
+    am start --user 0 -n ru.meefik.linuxdeploy/com.termux.x11.MainActivity >/dev/null 2>&1
+
+    echo "X11 is running. Close the desktop or press Ctrl+C to stop and umount."
+
+    local i=0
+    while [ "$i" -lt 40 ] && ! x11_session_alive; do
+        sleep 1
+        i=$((i + 1))
+    done
+
+    while x11_session_alive && x11_up; do
+        sleep 2
+    done
+
+    x11_cleanup
+    do_umount
+    trap - INT TERM HUP
+}
+
+case "$1" in
+    -s | --shell) load_config; do_shell ;;
+    -m | --mount) load_config; do_mount ;;
+    -u | --umount) load_config; do_umount ;;
+    -v | --vnc) load_config; do_vnc ;;
+    -x | --x11) load_config; do_x11 ;;
+    *) usage ;;
+esac
