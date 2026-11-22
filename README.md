@@ -35,7 +35,7 @@ wget https://raw.githubusercontent.com/ArieSR91/linuxdeploy-x11/main/linuxdeploy
 Edit this 3 file in \
 /etc/pam.d/login \
 /etc/pam.d/su-l \
-/etc/pam.d/runuser-l \
+/etc/pam.d/runuser-l
 
 Comment this string: \
 \#session       optional   pam_keyinit.so force revoke
